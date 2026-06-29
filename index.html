@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FF-Touring</title>
+    <title>Funky Family - Touring</title>
     <style>
         /* Modern Reset & Base Styles */
         * {
@@ -21,6 +21,7 @@
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
+            background-attachment: fixed; /* Helps with mobile scrolling */
             transition: background-image 0.8s ease-in-out;
             padding: 20px;
             background-color: #1a1a1a;
@@ -189,7 +190,10 @@
                 padding: 20px;
             }
             header h1 {
-                font-size: 2rem;
+                font-size: 1.8rem;
+            }
+            .budget-table td {
+                font-size: 0.95rem; /* Slightly smaller on mobile to fit "INR" text */
             }
         }
     </style>
@@ -198,7 +202,7 @@
 
     <div class="main-container">
         <header>
-            <h1>FF-Touring</h1>
+            <h1>Funky Family - Touring</h1>
             <p>Explore Destinations, Plans & Budgets Seamlessly</p>
         </header>
 
@@ -211,6 +215,8 @@
                 <option value="china">China</option>
                 <option value="malaysia">Malaysia</option>
                 <option value="thailand">Thailand</option>
+                <option value="nepal">Nepal</option>
+                <option value="vietnam">Vietnam</option>
             </select>
         </div>
 
@@ -222,19 +228,19 @@
             </div>
 
             <div class="card">
-                <h3>2. Estimated Budget (INR)</h3>
+                <h3>2. Estimated Budget</h3>
                 <table class="budget-table">
                     <tr>
                         <td>Flight Tickets (Return):</td>
-                        <td id="flightCost">₹0</td>
+                        <td id="flightCost">₹0 INR</td>
                     </tr>
                     <tr>
                         <td>Stay / Accommodation:</td>
-                        <td id="stayCost">₹0</td>
+                        <td id="stayCost">₹0 INR</td>
                     </tr>
                     <tr>
                         <td>Miscellaneous Expenses:</td>
-                        <td id="miscCost">₹0</td>
+                        <td id="miscCost">₹0 INR</td>
                     </tr>
                 </table>
             </div>
@@ -251,87 +257,13 @@
         // Centralized Travel Data Store
         const travelData = {
             srilanka: {
-                backgroundImage: "url('https://images.unsplash.com/photo-1586861635167-e5223aadc9fe?auto=format&fit=crop&w=1600&q=80')", // Sigiriya
+                backgroundImage: "url('https://images.unsplash.com/photo-1586861635167-e5223aadc9fe?auto=format&fit=crop&w=1080&q=80')",
                 attractions: ["Sigiriya Rock Fortress", "Ella Scenic Train Ride", "Temple of the Sacred Tooth Relic", "Mirissa Whales Watching"],
-                flight: "₹18,000 - ₹25,000",
-                stay: "₹2,500 - ₹6,000 / night",
-                misc: "₹1,500 / day",
+                flight: "₹18,000 - ₹25,000 INR",
+                stay: "₹2,500 - ₹6,000 INR / night",
+                misc: "₹1,500 INR / day",
                 exchange: "1 INR ≈ 3.50 Sri Lankan Rupee (LKR)"
             },
             indonesia: {
-                backgroundImage: "url('https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=1600&q=80')", // Bali
-                attractions: ["Ubud Monkey Forest", "Tanah Lot Temple", "Mount Batur Sunrise Trek", "Gili Islands"],
-                flight: "₹25,000 - ₹35,000",
-                stay: "₹3,000 - ₹8,000 / night",
-                misc: "₹2,000 / day",
-                exchange: "1 INR ≈ 190 Indonesian Rupiah (IDR)"
-            },
-            china: {
-                backgroundImage: "url('https://images.unsplash.com/photo-1508009603885-50cf7c579365?auto=format&fit=crop&w=1600&q=80')", // Great Wall
-                attractions: ["The Great Wall of China", "The Forbidden City (Beijing)", "Terracotta Army (Xi'an)", "The Bund (Shanghai)"],
-                flight: "₹35,000 - ₹50,000",
-                stay: "₹4,000 - ₹10,000 / night",
-                misc: "₹3,000 / day",
-                exchange: "1 Chinese Yuan (CNY) ≈ 11.50 INR"
-            },
-            malaysia: {
-                backgroundImage: "url('https://images.unsplash.com/photo-1596422846543-c5c6ff183fca?auto=format&fit=crop&w=1600&q=80')", // Petronas Towers
-                attractions: ["Petronas Twin Towers", "Batu Caves", "Langkawi Sky Bridge", "Penang Street Art"],
-                flight: "₹16,000 - ₹22,000",
-                stay: "₹2,800 - ₹7,000 / night",
-                misc: "₹1,800 / day",
-                exchange: "1 Malaysian Ringgit (MYR) ≈ 17.80 INR"
-            },
-            thailand: {
-                backgroundImage: "url('https://images.unsplash.com/photo-1528181304800-2f1258bb9f35?auto=format&fit=crop&w=1600&q=80')", // Thailand Temple
-                attractions: ["The Grand Palace (Bangkok)", "Phi Phi Islands", "Chiang Mai Night Bazaar", "Wat Arun"],
-                flight: "₹15,000 - ₹22,000",
-                stay: "₹2,000 - ₹6,500 / night",
-                misc: "₹2,000 / day",
-                exchange: "1 Thai Baht (THB) ≈ 2.30 INR"
-            }
-        };
-
-        function updateDashboard() {
-            const dropdown = document.getElementById("destination");
-            const selectedCountry = dropdown.value;
-            const data = travelData[selectedCountry];
-
-            if (!data) return;
-
-            // 1. Smoothly update background image
-            document.body.style.backgroundImage = data.backgroundImage;
-
-            // 2. Update Attractions list
-            const attractionsList = document.getElementById("attractions");
-            attractionsList.innerHTML = ""; // Clear old data
-            data.attractions.forEach(place => {
-                const li = document.createElement("li");
-                li.textContent = place;
-                attractionsList.appendChild(li);
-            });
-
-            // 3. Update Budget pricing elements
-            document.getElementById("flightCost").textContent = data.flight;
-            document.getElementById("stayCost").textContent = data.stay;
-            document.getElementById("miscCost").textContent = data.misc;
-
-            // 4. Update Currency Exchange output
-            document.getElementById("currencyExchange").textContent = data.exchange;
-
-            // 5. Trigger transition animation for dashboard data entry
-            const dashboard = document.getElementById("contentDashboard");
-            dashboard.classList.remove("active");
-            // Small timeout to allow the browser to register the class removal for the animation
-            setTimeout(() => {
-                dashboard.classList.add("active");
-            }, 50);
-        }
-
-        // Set a default global abstract background on first load
-        window.onload = function() {
-            document.body.style.backgroundImage = "url('https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=1600&q=80')";
-        }
-    </script>
-</body>
-</html>
+                backgroundImage: "url('https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=1080&q=80')",
+                attractions: ["Ubud Monkey Forest", "
