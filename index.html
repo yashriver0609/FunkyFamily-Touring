@@ -21,10 +21,10 @@
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
-            background-attachment: fixed; /* Helps with mobile scrolling */
+            background-attachment: fixed;
             transition: background-image 0.8s ease-in-out;
             padding: 20px;
-            background-color: #1a1a1a;
+            background-color: #2c3e50; /* Safe fallback color if images fail to load */
         }
 
         /* Floating Glassmorphism Container */
@@ -38,12 +38,11 @@
             max-width: 800px;
             padding: 40px;
             color: #ffffff;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
             transform: translateY(0);
             animation: floatAnimation 6s ease-in-out infinite;
         }
 
-        /* Subtle Floating Animation */
         @keyframes floatAnimation {
             0% { transform: translateY(0px); }
             50% { transform: translateY(-10px); }
@@ -68,7 +67,6 @@
             color: #e0e0e0;
         }
 
-        /* Dropdown Styling */
         .selector-box {
             display: flex;
             flex-direction: column;
@@ -86,17 +84,11 @@
             padding: 12px 20px;
             border-radius: 10px;
             border: 1px solid rgba(255, 255, 255, 0.3);
-            background: rgba(0, 0, 0, 0.4);
+            background: rgba(0, 0, 0, 0.7);
             color: #fff;
             font-size: 1.1rem;
             outline: none;
             cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        select:focus {
-            border-color: #00ffcc;
-            box-shadow: 0 0 10px rgba(0, 255, 204, 0.5);
         }
 
         select option {
@@ -104,23 +96,26 @@
             color: #fff;
         }
 
-        /* Content Sections Grid */
-        .content-layout {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 25px;
-            opacity: 0;
-            transform: translateY(20px);
-            transition: all 0.5s ease;
+        /* Failsafe Welcome Message */
+        .welcome-msg {
+            text-align: center;
+            font-size: 1.2rem;
+            color: #00ffcc;
+            padding: 20px;
+            border: 1px dashed #00ffcc;
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.4);
         }
 
-        .content-layout.active {
-            opacity: 1;
-            transform: translateY(0);
+        /* Content Sections Grid (Hidden initially, shown by JS) */
+        .content-layout {
+            display: none; /* Hidden by default */
+            grid-template-columns: 1fr;
+            gap: 25px;
         }
 
         .card {
-            background: rgba(0, 0, 0, 0.3);
+            background: rgba(0, 0, 0, 0.5);
             border-radius: 12px;
             padding: 20px;
             border-left: 5px solid #00ffcc;
@@ -134,7 +129,6 @@
             letter-spacing: 1px;
         }
 
-        /* Specific Lists & Tables */
         .attractions-list {
             list-style: none;
         }
@@ -142,19 +136,11 @@
         .attractions-list li {
             padding: 6px 0;
             border-bottom: 1px solid rgba(255,255,255,0.1);
-            display: flex;
-            align-items: center;
-        }
-
-        .attractions-list li::before {
-            content: "📍";
-            margin-right: 10px;
         }
 
         .budget-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 5px;
         }
 
         .budget-table td {
@@ -184,17 +170,9 @@
             border: 1px dashed #00ffcc;
         }
 
-        /* Responsive Breakpoints */
         @media (max-width: 600px) {
-            .main-container {
-                padding: 20px;
-            }
-            header h1 {
-                font-size: 1.8rem;
-            }
-            .budget-table td {
-                font-size: 0.95rem; /* Slightly smaller on mobile to fit "INR" text */
-            }
+            .main-container { padding: 20px; }
+            header h1 { font-size: 1.8rem; }
         }
     </style>
 </head>
@@ -208,7 +186,7 @@
 
         <div class="selector-box">
             <label for="destination">Select Your Next Destination:</label>
-            <select id="destination" onchange="updateDashboard()">
+            <select id="destination">
                 <option value="" disabled selected>-- Choose a Country --</option>
                 <option value="srilanka">Sri Lanka</option>
                 <option value="indonesia">Indonesia</option>
@@ -220,8 +198,11 @@
             </select>
         </div>
 
+        <div id="welcomeMsg" class="welcome-msg">
+            👆 Please select a destination from the list above to view the travel guide!
+        </div>
+
         <div id="contentDashboard" class="content-layout">
-            
             <div class="card">
                 <h3>1. Top Tourist Attractions</h3>
                 <ul id="attractions" class="attractions-list"></ul>
@@ -249,21 +230,107 @@
                 <h3>3. Currency Exchange Rate</h3>
                 <div id="currencyExchange" class="currency-box">Select a destination</div>
             </div>
-
         </div>
     </div>
 
     <script>
-        // Centralized Travel Data Store
         const travelData = {
             srilanka: {
-                backgroundImage: "url('https://images.unsplash.com/photo-1586861635167-e5223aadc9fe?auto=format&fit=crop&w=1080&q=80')",
+                bg: "url('https://images.unsplash.com/photo-1586861635167-e5223aadc9fe?auto=format&fit=crop&w=1080&q=80')",
                 attractions: ["Sigiriya Rock Fortress", "Ella Scenic Train Ride", "Temple of the Sacred Tooth Relic", "Mirissa Whales Watching"],
                 flight: "₹18,000 - ₹25,000 INR",
                 stay: "₹2,500 - ₹6,000 INR / night",
                 misc: "₹1,500 INR / day",
-                exchange: "1 INR ≈ 3.50 Sri Lankan Rupee (LKR)"
+                exchange: "1 INR ≈ 3.50 LKR"
             },
             indonesia: {
-                backgroundImage: "url('https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=1080&q=80')",
-                attractions: ["Ubud Monkey Forest", "
+                bg: "url('https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=1080&q=80')",
+                attractions: ["Ubud Monkey Forest", "Tanah Lot Temple", "Mount Batur Sunrise Trek", "Gili Islands"],
+                flight: "₹25,000 - ₹35,000 INR",
+                stay: "₹3,000 - ₹8,000 INR / night",
+                misc: "₹2,000 INR / day",
+                exchange: "1 INR ≈ 190 IDR"
+            },
+            china: {
+                bg: "url('https://images.unsplash.com/photo-1508009603885-50cf7c579365?auto=format&fit=crop&w=1080&q=80')",
+                attractions: ["The Great Wall of China", "The Forbidden City (Beijing)", "Terracotta Army (Xi'an)", "The Bund (Shanghai)"],
+                flight: "₹35,000 - ₹50,000 INR",
+                stay: "₹4,000 - ₹10,000 INR / night",
+                misc: "₹3,000 INR / day",
+                exchange: "1 CNY ≈ 11.50 INR"
+            },
+            malaysia: {
+                bg: "url('https://images.unsplash.com/photo-1596422846543-c5c6ff183fca?auto=format&fit=crop&w=1080&q=80')",
+                attractions: ["Petronas Twin Towers", "Batu Caves", "Langkawi Sky Bridge", "Penang Street Art"],
+                flight: "₹16,000 - ₹22,000 INR",
+                stay: "₹2,800 - ₹7,000 INR / night",
+                misc: "₹1,800 INR / day",
+                exchange: "1 MYR ≈ 17.80 INR"
+            },
+            thailand: {
+                bg: "url('https://images.unsplash.com/photo-1528181304800-2f1258bb9f35?auto=format&fit=crop&w=1080&q=80')",
+                attractions: ["The Grand Palace (Bangkok)", "Phi Phi Islands", "Chiang Mai Night Bazaar", "Wat Arun"],
+                flight: "₹15,000 - ₹22,000 INR",
+                stay: "₹2,000 - ₹6,500 INR / night",
+                misc: "₹2,000 INR / day",
+                exchange: "1 THB ≈ 2.30 INR"
+            },
+            nepal: {
+                bg: "url('https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=1080&q=80')",
+                attractions: ["Kathmandu Durbar Square", "Mount Everest Base Camp Trek", "Phewa Lake (Pokhara)", "Boudhanath Stupa"],
+                flight: "₹8,000 - ₹15,000 INR",
+                stay: "₹1,500 - ₹4,000 INR / night",
+                misc: "₹1,000 INR / day",
+                exchange: "1 INR ≈ 1.60 NPR"
+            },
+            vietnam: {
+                bg: "url('https://images.unsplash.com/photo-1528127269322-539801943592?auto=format&fit=crop&w=1080&q=80')",
+                attractions: ["Ha Long Bay", "Hoi An Ancient Town", "Cu Chi Tunnels", "Golden Bridge (Da Nang)"],
+                flight: "₹15,000 - ₹22,000 INR",
+                stay: "₹1,500 - ₹5,000 INR / night",
+                misc: "₹1,200 INR / day",
+                exchange: "1 INR ≈ 300 VND"
+            }
+        };
+
+        // Wait for the page to fully load before running scripts
+        document.addEventListener('DOMContentLoaded', function() {
+            
+            // Set default background
+            document.body.style.backgroundImage = "url('https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=1080&q=80')";
+
+            const dropdown = document.getElementById("destination");
+            
+            // Listen for user selecting a country
+            dropdown.addEventListener("change", function() {
+                const selectedCountry = dropdown.value;
+                const data = travelData[selectedCountry];
+
+                if (data) {
+                    // Update Background
+                    document.body.style.backgroundImage = data.bg;
+
+                    // Update Text Data
+                    document.getElementById("flightCost").textContent = data.flight;
+                    document.getElementById("stayCost").textContent = data.stay;
+                    document.getElementById("miscCost").textContent = data.misc;
+                    document.getElementById("currencyExchange").textContent = data.exchange;
+
+                    // Update List
+                    const list = document.getElementById("attractions");
+                    list.innerHTML = "";
+                    data.attractions.forEach(place => {
+                        const li = document.createElement("li");
+                        li.textContent = "📍 " + place;
+                        list.appendChild(li);
+                    });
+
+                    // Hide welcome message, show dashboard
+                    document.getElementById("welcomeMsg").style.display = "none";
+                    document.getElementById("contentDashboard").style.display = "grid";
+                }
+            });
+        });
+    </script>
+</body>
+</html>
